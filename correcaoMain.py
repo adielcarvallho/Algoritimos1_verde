@@ -671,6 +671,90 @@ def LancarNota():
 
     os.system('cls')
   return
+
+def CalcularNota(idAluno):
+  cursor.execute(''' SELECT Nota FROM nota WHERE  CodAluno = ? ''', (idAluno,))
+  rsNota = cursor.fetchall()
+
+  totalNota = 0
+  numProvas = 0
+
+  for x in rsNota:
+    totalNota = totalNota + float(x[0])
+    numProvas = numProvas + 1
+
+  media = totalNota / numProvas
+  situacao = ""
+
+  if(media >= (totalNota * 0.6)):
+    situacao = "APROVADO"
+    
+  elif(media < (totalNota * 0.6) and media >= (totalNota * 0.4)):
+    situacao = "EXAME FINAL"
+
+  else:
+    situacao = "REPROVADO"
+
+  return (totalNota,media,situacao)
+
+def GerarBoletim():
+  print('\n>>>GERAR BOLETIM<<<\n')
+
+  cursor.execute(''' SELECT * FROM turma ''')
+  rsTurma = cursor.fetchall()
+      
+  print('LISTA DE TURMAS')
+  for indice, valor in enumerate(rsTurma):
+    print("\t", indice+1, valor[1])
+
+  # LISTA OS PROFESSORES
+  cursor.execute(''' SELECT * FROM alunos ''')
+  rsAluno = cursor.fetchall()
+
+  print('\nLISTA DE ALUNOS')
+
+  for indice, valor in enumerate(rsAluno):
+    print("\t", indice+1, valor[1])
+
+  flag1 = False
+  if(not rsAluno or not rsTurma):
+    flag1 = True
+    print('\nNão existe dados o suficiente para realizar a operação.')
+    input('Pressione qualquer tecla para sair.')
+
+  codTurma = int(input('\nInforme o código da turma: '))
+  codAluno = int(input('Informe o código do aluno: '))
+
+  sitAluno = []
+
+  sitAluno = CalcularNota(rsAluno[codAluno-1][0])
+  os.system('cls')
+
+  print("BOLETIM ESCOLAR")
+  print("\nNOME: ", rsAluno[codAluno-1][1])
+  print("\nTURMA: ", rsTurma[codTurma-1][1])
+  print("\n")
+  cursor.execute(''' SELECT * FROM nota WHERE  CodAluno = ? ''', (codAluno-1,))
+  rsNota = cursor.fetchall()
+
+  avaliacao = {}
+
+  for i in rsNota:
+    cursor.execute(''' SELECT * FROM avaliacao WHERE CodAvaliacao = ?''',(i[1], ))
+    rs2 = cursor.fetchone()
+    avaliacao = {"avaliacao": rs2[1], "desc": rs2[2], "nota": i[2]}
+    
+  print('AVALIAÇÃO\tNOTA')
+  for x in avaliacao:
+    print("%s-%s\t%f", (avaliacao[x]["avaliacao"], avaliacao[x]["desc"], float(avaliacao[x]["nota"])))
+
+  print("\n\n\n")
+
+  print("NOTA FINAL: ", sitAluno[0])
+  print("MÉDIA: ", sitAluno[1])
+  print("\nSITUAÇÃO: ", sitAluno[2])
+
+  print("\nOBS NOTAS: \n\tACIMA DE 60% DA NOTA APROVADO \n\tMAIOR QUE 40% DA NOTA EXAME FINAL \n\tMENOR QUE 40% DA NOTA REPROVADO")
   
 # SISTEMA
 
